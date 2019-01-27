@@ -13,7 +13,7 @@
 <meta property="og:image" content="https://bitcom.bitdb.network/buttonpage.png" />
 <title>Button Page</title>
 <style>
-body { padding-top: 200px; }
+body { padding-top: 100px; }
 .container { display: flex; flex-direction: column; width: 500px; max-width: 100%; margin: 0 auto; }
 .container input[type=text] { flex-grow: 1; margin-bottom: 10px; padding: 10px; }
 h1 { font-family: Georgia; display: block; text-align: center; margin: 0; }
@@ -21,6 +21,7 @@ pre { background: rgba(0,0,0,0.05); padding: 10px; }
 #b { margin-top: 10px; }
 .sub { text-align: center; margin: 10px 10px 20px;; font-family: Menlo, monaco, Courier; font-size: 12px; }
 .sub pre { text-align: left; font-size; 12px; padding: 20px;}
+#set a { font-size: 10px; padding: 10px; display: block; font-family: Menlo, monaco, Courier; }
 a { color: red; }
 hr { background: rgba(0,0,0,0.1); }
 .hidden { display: none !important; }
@@ -32,6 +33,7 @@ footer a { color: gray; }
 <div class='sub'>Generate and Share <a href='https://moneybutton.com'>Moneybutton</a> Landing Pages</div>
 <div class='container'>
   <div id='editor'></div>
+  <div id='sent'></div>
   <div id='b'></div>
   <hr>
   <footer class='sub'>
@@ -64,8 +66,13 @@ document.addEventListener("DOMContentLoaded", function(e) {
       editable: true,
       currency: "USD",
       type: "tip",
-      devMode: "true"
     }
+  }
+  j.onPayment = function(r) {
+    console.log("success", r)
+  }
+  j.onError = function(err) {
+    console.log("error", err)
   }
   document.querySelector("#reveal").addEventListener("click", function(e) {
     e.preventDefault();
@@ -88,10 +95,20 @@ document.addEventListener("DOMContentLoaded", function(e) {
   var func = debounce(function() {
     var query = editor.getValue();
     var q = btoa(query)
-    history.pushState(null, null, window.location.origin + "#" + q)
-    var jj = JSON.parse(query)
-    moneyButton.render(document.querySelector("#b"), jj)
-  }, 250);
+    try {
+      var jj = JSON.parse(query)
+      jj.onPayment = function(r) {
+        console.log("success", r)
+        document.querySelector("#sent").innerHTML = "<a target='_blank' href='https://whatsonchain.com/tx/"+r.txid+"'>Transaction sent: " + r.txid + "</a>"
+      }
+      jj.onError = function(err) {
+        console.log("error", err)
+      }
+      history.pushState(null, null, window.location.origin + "#" + q)
+      moneyButton.render(document.querySelector("#b"), jj)
+    } catch (e) {
+    }
+  }, 1000);
   editor.getSession().on('change', func)
 })
 </script>
